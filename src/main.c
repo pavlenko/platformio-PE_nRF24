@@ -2,6 +2,9 @@
 #include "main.h"
 
 PE_Button_Key_t key1;
+PE_nRF24_t nRf24;
+
+SPI_HandleTypeDef SPIn;
 
 void SystemClock_Config(void);
 void MX_GPIO_Init();
@@ -31,6 +34,38 @@ void PE_Button_onRelease(PE_Button_Key_t *key) {
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 }
 
+void PE_nRF24_setCE0(PE_nRF24_t *handle) {
+    //any pin
+    (void) handle;
+}
+
+void PE_nRF24_setCE1(PE_nRF24_t *handle) {
+    //any pin
+    (void) handle;
+}
+
+void PE_nRF24_setSS0(PE_nRF24_t *handle) {
+    //SPI1 -> PA4|remap PA15
+    //SPI2 -> PB12
+    if (SPIn.Instance == SPI1) {
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+    }
+    if (SPIn.Instance == SPI2) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+    }
+    (void) handle;
+}
+
+void PE_nRF24_setSS1(PE_nRF24_t *handle) {
+    if (SPIn.Instance == SPI1) {
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+    }
+    if (SPIn.Instance == SPI2) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+    }
+    (void) handle;
+}
+
 void MX_GPIO_Init() {
     GPIO_InitTypeDef GPIO_InitStruct;
 
@@ -52,27 +87,10 @@ void MX_GPIO_Init() {
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
 
-/**
- * @brief  System Clock Configuration
- *         The system Clock is configured as follow :
- *            System Clock source            = PLL (HSE)
- *            SYSCLK(Hz)                     = 72000000
- *            HCLK(Hz)                       = 72000000
- *            AHB Prescaler                  = 1
- *            APB1 Prescaler                 = 2
- *            APB2 Prescaler                 = 1
- *            HSE Frequency(Hz)              = 8000000
- *            HSE PREDIV1                    = 1
- *            PLL2MUL                        = 9
- *            Flash Latency(WS)              = 2
- * @param  None
- * @retval None
- */
 void SystemClock_Config(void)
 {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
     // Initializes the CPU clock source
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
@@ -81,7 +99,7 @@ void SystemClock_Config(void)
     RCC_OscInitStruct.HSIState       = RCC_HSI_ON;
     RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLMUL     = RCC_PLL_MUL9;
+    RCC_OscInitStruct.PLL.PLLMUL     = RCC_PLL_MUL8;
 
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler(__FILE__, __LINE__);
@@ -101,13 +119,6 @@ void SystemClock_Config(void)
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
-
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
-    PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV1_5;
-
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-        Error_Handler(__FILE__, __LINE__);
-    }
 }
 
 /**
@@ -122,6 +133,8 @@ void HAL_MspInit(void)
 
     /* Power interface clock enable */
     __HAL_RCC_PWR_CLK_ENABLE();
+
+    __HAL_AFIO_REMAP_SWJ_NOJTAG();
 }
 
 /**
