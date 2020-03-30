@@ -13,7 +13,13 @@ int main()
     MX_GPIO_Init();
 
     while (1) {
+#ifdef PE_nRF_MASTER
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
+#endif
+#ifdef PE_nRF_SLAVE
+        //TODO toggle led depends on rf signal
+        PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
+#endif
     }
 }
 
