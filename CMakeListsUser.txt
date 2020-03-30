@@ -1,0 +1,3 @@
+include_directories("$ENV{HOME}/.platformio/packages/framework-stm32cube/f1/Drivers/STM32F1xx_HAL_Driver/Src")
+
+include_directories("${CMAKE_CURRENT_LIST_DIR}/lib/PE_Button/src")
