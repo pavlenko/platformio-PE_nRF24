@@ -67,7 +67,7 @@ PE_nRF24_RESULT_t PE_nRF24_readPacket(PE_nRF24_t *handle, uint8_t *data, uint8_t
     if (timeout > 0) {
         uint32_t start = PE_nRF24_getMillis();
 
-        while (PE_nRF24_checkIRQ(handle, PE_nRF24_IRQ_TX_DS) != PE_nRF24_RESULT_OK) {
+        while (PE_nRF24_checkIRQ(handle, PE_nRF24_IRQ_RX_DR) != PE_nRF24_RESULT_OK) {
             if ((PE_nRF24_getMillis() - start) > timeout) {
                 handle->status = PE_nRF24_STATUS_READY;
                 return PE_nRF24_RESULT_TIMEOUT;

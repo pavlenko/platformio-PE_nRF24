@@ -4,9 +4,14 @@
 #include <PE_nRF24_api.h>
 #include <PE_nRF24_irq.h>
 
+#include "led.h"
 #include "spi.h"
 
 //TODO constant passed from compiler, remove after write code
+#ifndef PE_nRF_MASTER
+#define PE_nRF_MASTER
+#endif
+
 #ifndef PE_nRF_SLAVE
 #define PE_nRF_SLAVE
 #endif
@@ -26,6 +31,7 @@ int main()
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
+    MX_LED_Init();
     MX_SPI1_Init(&SPIn);
 
     nRF24.config.addressWidth = PE_nRF24_ADDR_WIDTH_3BIT;
@@ -42,7 +48,7 @@ int main()
 
 #ifdef PE_nRF_MASTER
     const char addr[] = PE_nRF24_TEST_ADDRESS;
-    const char data[] = "Hello";
+    uint8_t data[32];
 #endif
 
 #ifdef PE_nRF_SLAVE
@@ -65,30 +71,30 @@ int main()
 #ifdef PE_nRF_MASTER
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
 
-        if (PE_nRF24_sendPacket(&nRF24_handle, (uint8_t *) addr, (uint8_t *) data, strlen(data), 10) != PE_nRF24_RESULT_OK) {
+        if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
+            data[0] = 0;
+        } else {
+            data[0] = 1;
+        }
+
+        if (PE_nRF24_sendPacket(&nRF24_handle, (uint8_t *) addr, data, 32, 20) != PE_nRF24_RESULT_OK) {
             Error_Handler(__FILE__, __LINE__);
         }
 #endif
 #ifdef PE_nRF_SLAVE
-        if (PE_nRF24_readPacket(&nRF24_handle, (uint8_t *) data, size, 0) != PE_nRF24_RESULT_OK) {
-            Error_Handler(__FILE__, __LINE__);
-        }
-
-        received = 0;
-
-        while (received == 0);
-
-        //TODO check data received
+        MX_LED_OFF(0);
 #endif
     }
 }
 
 void PE_Button_onPress(PE_Button_Key_t *key) {
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+    MX_LED_ON(1);
+    (void) key;
 }
 
 void PE_Button_onRelease(PE_Button_Key_t *key) {
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+    MX_LED_OFF(0);
+    (void) key;
 }
 
 void PE_nRF24_setCE0(PE_nRF24_t *handle) {
@@ -128,7 +134,16 @@ void PE_nRF24_setSS1(PE_nRF24_t *handle) {
 #ifdef PE_nRF_SLAVE
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
     (void) handle;
-    received = 1;
+
+    uint8_t data[32]
+
+    if (PE_nRF24_getPayload(handle, data, 32) != PE_nRF24_RESULT_OK) {
+        Error_Handler(__FILE__, __LINE__);
+    }
+
+    if (data[0] > 0) {
+        MX_LED_ON(100);
+    }
 }
 
 void EXTIRQ_Handler(void) {
