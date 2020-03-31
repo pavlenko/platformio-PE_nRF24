@@ -7,15 +7,6 @@
 #include "led.h"
 #include "spi.h"
 
-//TODO constant passed from compiler, remove after write code
-#ifndef PE_nRF_MASTER
-//#define PE_nRF_MASTER
-#endif
-
-#ifndef PE_nRF_SLAVE
-//#define PE_nRF_SLAVE
-#endif
-
 PE_Button_Key_t key1;
 PE_nRF24_t nRF24;
 
@@ -76,9 +67,11 @@ int main()
             data[0] = 0;
         }
 
-//        if (PE_nRF24_sendPacket(&nRF24, (uint8_t *) addr, data, 32, 20) != PE_nRF24_RESULT_OK) {
-//            Error_Handler(__FILE__, __LINE__);
-//        }
+        if (PE_nRF24_sendPacket(&nRF24, (uint8_t *) addr, data, 32, 20) != PE_nRF24_RESULT_OK) {
+            Error_Handler(__FILE__, __LINE__);
+        }
+
+        HAL_Delay(100);
 #endif
 #ifdef PE_nRF_SLAVE
         MX_LED_OFF(0);
@@ -99,6 +92,10 @@ void PE_Button_onHoldRepeated(PE_Button_Key_t *key) {
 void PE_Button_onRelease(PE_Button_Key_t *key) {
     MX_LED_OFF(0);
     (void) key;
+}
+
+uint32_t PE_nRF24_getMillis(void) {
+    return HAL_GetTick();
 }
 
 PE_nRF24_RESULT_t PE_nRF24_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {

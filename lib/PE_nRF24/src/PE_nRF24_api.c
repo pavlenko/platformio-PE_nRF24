@@ -51,6 +51,7 @@ PE_nRF24_RESULT_t PE_nRF24_setPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t
     return PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_TX_PAYLOAD, data, size);
 }
 
+//TODO check send/read packet logic, for now error returned, maybe create separate function for blocking & irq mode
 PE_nRF24_RESULT_t PE_nRF24_readPacket(PE_nRF24_t *handle, uint8_t *data, uint8_t size, uint16_t timeout) {
     if (handle->status != PE_nRF24_STATUS_READY) {
         return PE_nRF24_RESULT_ERROR;
