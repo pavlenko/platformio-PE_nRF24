@@ -9,11 +9,11 @@
 
 //TODO constant passed from compiler, remove after write code
 #ifndef PE_nRF_MASTER
-#define PE_nRF_MASTER
+//#define PE_nRF_MASTER
 #endif
 
 #ifndef PE_nRF_SLAVE
-#define PE_nRF_SLAVE
+//#define PE_nRF_SLAVE
 #endif
 
 PE_Button_Key_t key1;
@@ -24,14 +24,13 @@ SPI_HandleTypeDef SPIn;
 void SystemClock_Config(void);
 void MX_GPIO_Init();
 
-static uint8_t received = 0;
-
 int main()
 {
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
     MX_LED_Init();
+    MX_LED_OFF(1);
     MX_SPI1_Init(&SPIn);
 
     nRF24.config.addressWidth = PE_nRF24_ADDR_WIDTH_3BIT;
@@ -72,14 +71,14 @@ int main()
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
 
         if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
-            data[0] = 0;
-        } else {
             data[0] = 1;
+        } else {
+            data[0] = 0;
         }
 
-        if (PE_nRF24_sendPacket(&nRF24_handle, (uint8_t *) addr, data, 32, 20) != PE_nRF24_RESULT_OK) {
-            Error_Handler(__FILE__, __LINE__);
-        }
+//        if (PE_nRF24_sendPacket(&nRF24, (uint8_t *) addr, data, 32, 20) != PE_nRF24_RESULT_OK) {
+//            Error_Handler(__FILE__, __LINE__);
+//        }
 #endif
 #ifdef PE_nRF_SLAVE
         MX_LED_OFF(0);
@@ -92,18 +91,45 @@ void PE_Button_onPress(PE_Button_Key_t *key) {
     (void) key;
 }
 
+void PE_Button_onHoldRepeated(PE_Button_Key_t *key) {
+    MX_LED_ON(1);
+    (void) key;
+}
+
 void PE_Button_onRelease(PE_Button_Key_t *key) {
     MX_LED_OFF(0);
     (void) key;
 }
 
+PE_nRF24_RESULT_t PE_nRF24_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
+    (void) handle;
+
+    if (HAL_SPI_Receive(&SPIn, data, size, 10) != HAL_OK) {
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    return PE_nRF24_RESULT_OK;
+}
+
+PE_nRF24_RESULT_t PE_nRF24_sendData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
+    (void) handle;
+
+    if (HAL_SPI_Transmit(&SPIn, data, size, 10) != HAL_OK) {
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    return PE_nRF24_RESULT_OK;
+}
+
 void PE_nRF24_setCE0(PE_nRF24_t *handle) {
-    //any pin
+    //PA2 ------> nRF24_CE
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
     (void) handle;
 }
 
 void PE_nRF24_setCE1(PE_nRF24_t *handle) {
-    //any pin
+    //PA2 ------> nRF24_CE
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
     (void) handle;
 }
 
@@ -146,9 +172,15 @@ void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
     }
 }
 
-void EXTIRQ_Handler(void) {
-    if (PE_nRF24_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
-        Error_Handler(__FILE__, __LINE__);
+void EXTI3_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == GPIO_PIN_3) {
+        if (PE_nRF24_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
+            Error_Handler(__FILE__, __LINE__);
+        }
     }
 }
 #endif
@@ -157,21 +189,33 @@ void MX_GPIO_Init() {
     GPIO_InitTypeDef GPIO_InitStruct;
 
     /* GPIO clock enable */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
 
     /* GPIO Configuration */
-    GPIO_InitStruct.Pin   = GPIO_PIN_13;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_OD;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
     GPIO_InitStruct.Pin   = GPIO_PIN_15;
     GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
 
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    //PA2 ------> nRF24_CE
+    //PA3 ------> nRF24_IRQ
+    GPIO_InitStruct.Pin   = GPIO_PIN_2;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin   = GPIO_PIN_3;
+    GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 }
 
 void SystemClock_Config(void)
@@ -338,7 +382,17 @@ void Error_Handler(const char * file, int line)
     UNUSED(file);
     UNUSED(line);
 
+    const uint16_t sequence[] = {
+            100,
+            200,
+            100,
+            200,
+            100,
+            1200,
+    };
+
     while (1) {
+        MX_LED_PLAY(sequence, 6);
         __NOP();
     }
 }
