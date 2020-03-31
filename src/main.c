@@ -1,5 +1,9 @@
-#include <PE_Button.h>
 #include "main.h"
+
+#include <PE_Button.h>
+#include <PE_nRF24_api.h>
+
+#include "spi.h"
 
 PE_Button_Key_t key1;
 PE_nRF24_t nRf24;
@@ -14,6 +18,7 @@ int main()
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
+    MX_SPI1_Init(&SPIn);
 
     while (1) {
 #ifdef PE_nRF_MASTER
