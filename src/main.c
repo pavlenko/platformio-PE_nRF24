@@ -2,16 +2,24 @@
 
 #include <PE_Button.h>
 #include <PE_nRF24_api.h>
+#include <PE_nRF24_irq.h>
 
 #include "spi.h"
 
+//TODO constant passed from compiler, remove after write code
+#ifndef PE_nRF_SLAVE
+#define PE_nRF_SLAVE
+#endif
+
 PE_Button_Key_t key1;
-PE_nRF24_t nRf24;
+PE_nRF24_t nRF24;
 
 SPI_HandleTypeDef SPIn;
 
 void SystemClock_Config(void);
 void MX_GPIO_Init();
+
+static uint8_t received = 0;
 
 int main()
 {
@@ -20,13 +28,57 @@ int main()
     MX_GPIO_Init();
     MX_SPI1_Init(&SPIn);
 
+    nRF24.config.addressWidth = PE_nRF24_ADDR_WIDTH_3BIT;
+    nRF24.config.dataRate     = PE_nRF24_DATA_RATE_1000KBPS;
+    nRF24.config.rfChannel    = 1;
+    nRF24.config.crcScheme    = PE_nRF24_CRC_SCHEME_OFF;
+    nRF24.config.txPower      = PE_nRF24_TX_POWER__6dBm;
+    nRF24.config.retryCount   = 0;
+    nRF24.config.retryDelay   = 0;
+
+    if (PE_nRF24_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
+        Error_Handler(__FILE__, __LINE__);
+    }
+
+#ifdef PE_nRF_MASTER
+    const char addr[] = PE_nRF24_TEST_ADDRESS;
+    const char data[] = "Hello";
+#endif
+
+#ifdef PE_nRF_SLAVE
+    // Initialize RX
+    PE_nRF24_configRX_t nRF24_configRX;
+
+    nRF24_configRX.address     = (uint8_t *) PE_nRF24_TEST_ADDRESS;
+    nRF24_configRX.autoACK     = PE_nRF24_AUTO_ACK_OFF;
+    nRF24_configRX.payloadSize = 32;
+
+    if (PE_nRF24_configureRX(&nRF24_handle, &nRF24_configRX, PE_nRF24_PIPE_RX0) != PE_nRF24_RESULT_OK) {
+        Error_Handler(__FILE__, __LINE__);
+    }
+
+    PE_nRF24_attachRXPipe(&nRF24, PE_nRF24_PIPE_RX0);
+    PE_nRF24_attachIRQ(&nRF24, PE_nRF24_IRQ_RX_DR);
+#endif
+
     while (1) {
 #ifdef PE_nRF_MASTER
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
+
+        if (PE_nRF24_sendPacket(&nRF24_handle, (uint8_t *) addr, (uint8_t *) data, strlen(data), 10) != PE_nRF24_RESULT_OK) {
+            Error_Handler(__FILE__, __LINE__);
+        }
 #endif
 #ifdef PE_nRF_SLAVE
-        //TODO toggle led depends on rf signal
-        PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
+        if (PE_nRF24_readPacket(&nRF24_handle, (uint8_t *) data, size, 0) != PE_nRF24_RESULT_OK) {
+            Error_Handler(__FILE__, __LINE__);
+        }
+
+        received = 0;
+
+        while (received == 0);
+
+        //TODO check data received
 #endif
     }
 }
@@ -50,12 +102,12 @@ void PE_nRF24_setCE1(PE_nRF24_t *handle) {
 }
 
 void PE_nRF24_setSS0(PE_nRF24_t *handle) {
-    //SPI1 -> PA4|remap PA15
-    //SPI2 -> PB12
     if (SPIn.Instance == SPI1) {
+        //PA4 ------> SPI1_NSS
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
     }
     if (SPIn.Instance == SPI2) {
+        //PB12 ------> SPI2_NSS
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
     }
     (void) handle;
@@ -63,13 +115,28 @@ void PE_nRF24_setSS0(PE_nRF24_t *handle) {
 
 void PE_nRF24_setSS1(PE_nRF24_t *handle) {
     if (SPIn.Instance == SPI1) {
+        //PA4 ------> SPI1_NSS
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
     }
     if (SPIn.Instance == SPI2) {
+        //PB12 ------> SPI2_NSS
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
     }
     (void) handle;
 }
+
+#ifdef PE_nRF_SLAVE
+void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
+    (void) handle;
+    received = 1;
+}
+
+void EXTIRQ_Handler(void) {
+    if (PE_nRF24_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
+        Error_Handler(__FILE__, __LINE__);
+    }
+}
+#endif
 
 void MX_GPIO_Init() {
     GPIO_InitTypeDef GPIO_InitStruct;
