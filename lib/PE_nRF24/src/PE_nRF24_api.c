@@ -508,6 +508,7 @@ PE_nRF24_RESULT_t PE_nRF24_configureRF(PE_nRF24_t *handle) {
     result |= PE_nRF24_setCRCScheme(handle, handle->config.crcScheme);
     result |= PE_nRF24_setTXPower(handle, handle->config.txPower);
     result |= PE_nRF24_setRetransmit(handle, handle->config.retryCount, handle->config.retryDelay);
+    result |= PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
 
     result |= PE_nRF24_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX0);
     result |= PE_nRF24_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX1);
