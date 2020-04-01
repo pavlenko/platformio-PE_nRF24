@@ -105,9 +105,9 @@ int main()
             data[0] = 0;
         }
 
-//        if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
-//            Error_Handler(__FILE__, __LINE__);
-//        }
+        if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
+            Error_Handler(__FILE__, __LINE__);
+        }
 
         HAL_Delay(100);
 #endif
@@ -139,7 +139,7 @@ uint32_t PE_nRF24_getMillis(void) {
 PE_nRF24_RESULT_t PE_nRF24_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
     (void) handle;
 
-    if (HAL_SPI_Receive(&SPIn, data, size, 10) != HAL_OK) {
+    if (HAL_SPI_Receive(&SPIn, data, size, 1000) != HAL_OK) {
         return PE_nRF24_RESULT_ERROR;
     }
 
@@ -149,7 +149,7 @@ PE_nRF24_RESULT_t PE_nRF24_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t s
 PE_nRF24_RESULT_t PE_nRF24_sendData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
     (void) handle;
 
-    if (HAL_SPI_Transmit(&SPIn, data, size, 10) != HAL_OK) {
+    if (HAL_SPI_Transmit(&SPIn, data, size, 1000) != HAL_OK) {
         return PE_nRF24_RESULT_ERROR;
     }
 

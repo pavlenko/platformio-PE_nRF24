@@ -232,6 +232,7 @@ PE_nRF24_RESULT_t PE_nRF24_attachIRQ(PE_nRF24_t *handle, PE_nRF24_IRQ_t mask) {
         return PE_nRF24_RESULT_ERROR;
     }
 
+    //TODO check this
     reg &= ~(mask & (uint8_t) PE_nRF24_IRQ_ALL);
 
     if (PE_nRF24_setRegister(handle, PE_nRF24_REG_CONFIG, &reg) != PE_nRF24_RESULT_OK) {
@@ -248,6 +249,7 @@ PE_nRF24_RESULT_t PE_nRF24_detachIRQ(PE_nRF24_t *handle, PE_nRF24_IRQ_t mask) {
         return PE_nRF24_RESULT_ERROR;
     }
 
+    //TODO check this
     reg |= (mask & (uint8_t) PE_nRF24_IRQ_ALL);
 
     if (PE_nRF24_setRegister(handle, PE_nRF24_REG_CONFIG, &reg) != PE_nRF24_RESULT_OK) {
@@ -500,8 +502,8 @@ PE_nRF24_RESULT_t PE_nRF24_configureRF(PE_nRF24_t *handle) {
     result |= PE_nRF24_setCRCScheme(handle, handle->config.crcScheme);
     result |= PE_nRF24_setTXPower(handle, handle->config.txPower);
     result |= PE_nRF24_setRetransmit(handle, handle->config.retryCount, handle->config.retryDelay);
-    result |= PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_ALL);
-    result |= PE_nRF24_clearIRQ(handle, PE_nRF24_IRQ_ALL);
+    //result |= PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_ALL);
+    //result |= PE_nRF24_clearIRQ(handle, PE_nRF24_IRQ_ALL);
     result |= PE_nRF24_flushTX(handle);
     result |= PE_nRF24_flushRX(handle);
 
