@@ -21,23 +21,19 @@ void MX_GPIO_Init();
 PE_nRF24_RESULT_t nRF24_transmitPacket(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size)
 {
     volatile uint32_t wait = nRF24_WAIT_TIMEOUT;
-    uint8_t status;
 
     handle->status = PE_nRF24_STATUS_BUSY_TX;
 
     PE_nRF24_setCE0(handle);
 
     PE_nRF24_setTXAddress(handle, addr);
-
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_TX);
     PE_nRF24_setPayload(handle, data, size);
 
     PE_nRF24_setCE1(handle);
 
     do {
-        PE_nRF24_getRegister(handle, PE_nRF24_REG_STATUS, &status);
-
-        if (status & (PE_nRF24_IRQ_TX_DS | PE_nRF24_IRQ_MAX_RT)) {
+        if (handle->status == PE_nRF24_STATUS_READY) {
             break;
         }
     } while (wait--);
@@ -71,8 +67,6 @@ int main()
     if (PE_nRF24_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
-//
-//    PE_nRF24_attachIRQ(&nRF24, PE_nRF24_IRQ_TX_DS|PE_nRF24_IRQ_MAX_RT);
 
 #ifdef PE_nRF_MASTER
     const char addr[] = PE_nRF24_TEST_ADDRESS;
@@ -95,6 +89,8 @@ int main()
     PE_nRF24_attachIRQ(&nRF24, PE_nRF24_IRQ_RX_DR);
 #endif
 
+    uint32_t start = HAL_GetTick();
+
     while (1) {
 #ifdef PE_nRF_MASTER
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
@@ -105,11 +101,15 @@ int main()
             data[0] = 0;
         }
 
-        if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
-            Error_Handler(__FILE__, __LINE__);
+        if (HAL_GetTick() - start > 100) {
+            start = HAL_GetTick();
+
+            if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
+                Error_Handler(__FILE__, __LINE__);
+            }
         }
 
-        HAL_Delay(100);
+        MX_LED_OFF(0);
 #endif
 #ifdef PE_nRF_SLAVE
         MX_LED_OFF(0);
@@ -192,6 +192,16 @@ void PE_nRF24_setSS1(PE_nRF24_t *handle) {
     (void) handle;
 }
 
+void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
+    (void) handle;
+
+}
+
+void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
+    (void) handle;
+    MX_LED_ON(2);
+}
+
 #ifdef PE_nRF_SLAVE
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
     (void) handle;
@@ -206,6 +216,12 @@ void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
         MX_LED_ON(100);
     }
 }
+#else
+void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
+    (void) handle;
+    MX_LED_ON(2);
+}
+#endif
 
 void EXTI3_IRQHandler(void) {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
@@ -214,11 +230,10 @@ void EXTI3_IRQHandler(void) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_3) {
         if (PE_nRF24_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
-            Error_Handler(__FILE__, __LINE__);
+            MX_LED_ON(2);
         }
     }
 }
-#endif
 
 void MX_GPIO_Init() {
     GPIO_InitTypeDef GPIO_InitStruct;
@@ -245,8 +260,7 @@ void MX_GPIO_Init() {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
 
     GPIO_InitStruct.Pin   = GPIO_PIN_3;
-    GPIO_InitStruct.Mode  = GPIO_MODE_IT_RISING;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
+    GPIO_InitStruct.Mode  = GPIO_MODE_IT_FALLING;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);

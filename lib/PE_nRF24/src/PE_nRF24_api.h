@@ -123,7 +123,7 @@ PE_nRF24_RESULT_t PE_nRF24_detachIRQ(PE_nRF24_t *handle, PE_nRF24_IRQ_t mask);
  * @param mask
  * @return
  */
-PE_nRF24_RESULT_t PE_nRF24_clearIRQ(PE_nRF24_t *handle, PE_nRF24_IRQ_t mask);
+PE_nRF24_RESULT_t PE_nRF24_clearIRQ(PE_nRF24_t *handle);
 
 /**
  * @param handle

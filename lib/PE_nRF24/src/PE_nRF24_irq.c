@@ -46,7 +46,7 @@ static PE_nRF24_RESULT_t PE_nRF24_handleIRQ_RX_DR(PE_nRF24_t *handle)
         }
 
         // Clear pending IRQ
-        PE_nRF24_clearIRQ(handle, PE_nRF24_IRQ_RX_DR);
+        PE_nRF24_clearIRQ(handle);
 
         PE_nRF24_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
 
@@ -66,7 +66,7 @@ static PE_nRF24_RESULT_t PE_nRF24_handleIRQ_TX_DS(PE_nRF24_t *handle)
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
 
     // Clear pending IRQ
-    PE_nRF24_clearIRQ(handle, PE_nRF24_IRQ_TX_DS);
+    PE_nRF24_clearIRQ(handle);
 
     PE_nRF24_setCE1(handle);
 
@@ -91,7 +91,7 @@ static PE_nRF24_RESULT_t PE_nRF24_handleIRQ_MAX_RT(PE_nRF24_t *handle)
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
 
     // Clear pending IRQ
-    PE_nRF24_clearIRQ(handle, PE_nRF24_IRQ_MAX_RT);
+    PE_nRF24_clearIRQ(handle);
 
     PE_nRF24_setCE1(handle);
 
