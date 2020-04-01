@@ -20,35 +20,51 @@ const uint8_t PE_nRF24_REG_RX_ADDR[7] = {
 };
 
 PE_nRF24_RESULT_t PE_nRF24_getRegister(PE_nRF24_t *handle, uint8_t addr, uint8_t *byte) {
+    PE_nRF24_RESULT_t result;
+
     PE_nRF24_setSS0(handle);
 
-    if (PE_nRF24_readMem(handle, PE_nRF24_CMD_R_REGISTER | addr, byte, 1) != PE_nRF24_RESULT_OK) {
-        return PE_nRF24_RESULT_ERROR;
-    }
+    result = PE_nRF24_readMem(handle, PE_nRF24_CMD_R_REGISTER | addr, byte, 1);
 
     PE_nRF24_setSS1(handle);
 
-    return PE_nRF24_RESULT_OK;
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_setRegister(PE_nRF24_t *handle, uint8_t addr, uint8_t *byte) {
+    PE_nRF24_RESULT_t result;
+
     PE_nRF24_setSS0(handle);
 
-    if (PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_REGISTER | addr, byte, 1) != PE_nRF24_RESULT_OK) {
-        return PE_nRF24_RESULT_ERROR;
-    }
+    result = PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_REGISTER | addr, byte, 1);
 
     PE_nRF24_setSS1(handle);
 
-    return PE_nRF24_RESULT_OK;
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_getPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
-    return PE_nRF24_readMem(handle, PE_nRF24_CMD_R_RX_PAYLOAD, data, size);
+    PE_nRF24_RESULT_t result;
+
+    PE_nRF24_setSS0(handle);
+
+    result = PE_nRF24_readMem(handle, PE_nRF24_CMD_R_RX_PAYLOAD, data, size);
+
+    PE_nRF24_setSS1(handle);
+
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_setPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
-    return PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_TX_PAYLOAD, data, size);
+    PE_nRF24_RESULT_t result;
+
+    PE_nRF24_setSS0(handle);
+
+    result = PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_TX_PAYLOAD, data, size);
+
+    PE_nRF24_setSS1(handle);
+
+    return result;
 }
 
 //TODO check send/read packet logic, for now error returned, maybe create separate function for blocking & irq mode
@@ -186,11 +202,27 @@ PE_nRF24_RESULT_t PE_nRF24_setRXAddress(PE_nRF24_t *handle, uint8_t *address, PE
 }
 
 PE_nRF24_RESULT_t PE_nRF24_flushTX(PE_nRF24_t *handle) {
-    return PE_nRF24_sendByte(handle, PE_nRF24_CMD_FLUSH_TX);
+    PE_nRF24_RESULT_t result;
+
+    PE_nRF24_setSS0(handle);
+
+    result = PE_nRF24_sendByte(handle, PE_nRF24_CMD_FLUSH_TX);
+
+    PE_nRF24_setSS1(handle);
+
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_flushRX(PE_nRF24_t *handle) {
-    return PE_nRF24_sendByte(handle, PE_nRF24_CMD_FLUSH_RX);
+    PE_nRF24_RESULT_t result;
+
+    PE_nRF24_setSS0(handle);
+
+    result = PE_nRF24_sendByte(handle, PE_nRF24_CMD_FLUSH_RX);
+
+    PE_nRF24_setSS1(handle);
+
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_attachIRQ(PE_nRF24_t *handle, PE_nRF24_IRQ_t mask) {
@@ -446,14 +478,18 @@ PE_nRF24_RESULT_t PE_nRF24_configureRF(PE_nRF24_t *handle) {
     uint8_t reg;
     PE_nRF24_RESULT_t result = PE_nRF24_RESULT_OK;
 
+    PE_nRF24_setCE0(handle);
+
     // Set device power up
     if (PE_nRF24_setPowerMode(handle, PE_nRF24_POWER_ON) != PE_nRF24_RESULT_OK) {
+        PE_nRF24_setCE1(handle);
         return PE_nRF24_RESULT_ERROR;
     }
 
     // Check if prev operation success
     do {
         if (PE_nRF24_getRegister(handle, PE_nRF24_REG_CONFIG, &reg) != PE_nRF24_RESULT_OK) {
+            PE_nRF24_setCE1(handle);
             return PE_nRF24_RESULT_ERROR;
         }
     } while ((reg & PE_nRF24_CONFIG_PWR_UP) == 0x00);
@@ -468,6 +504,8 @@ PE_nRF24_RESULT_t PE_nRF24_configureRF(PE_nRF24_t *handle) {
     result |= PE_nRF24_clearIRQ(handle, PE_nRF24_IRQ_ALL);
     result |= PE_nRF24_flushTX(handle);
     result |= PE_nRF24_flushRX(handle);
+
+    PE_nRF24_setCE1(handle);
 
     if (result != PE_nRF24_RESULT_OK) {
         return PE_nRF24_RESULT_ERROR;

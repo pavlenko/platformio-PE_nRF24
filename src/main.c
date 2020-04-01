@@ -3,6 +3,7 @@
 #include <PE_Button.h>
 #include <PE_nRF24_api.h>
 #include <PE_nRF24_irq.h>
+#include <PE_nRF24_spi.h>
 
 #include "led.h"
 #include "spi.h"
@@ -14,6 +15,41 @@ SPI_HandleTypeDef SPIn;
 
 void SystemClock_Config(void);
 void MX_GPIO_Init();
+
+#define nRF24_WAIT_TIMEOUT         (uint32_t) 100
+
+PE_nRF24_RESULT_t nRF24_transmitPacket(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size)
+{
+    volatile uint32_t wait = nRF24_WAIT_TIMEOUT;
+    uint8_t status;
+
+    handle->status = PE_nRF24_STATUS_BUSY_TX;
+
+    PE_nRF24_setCE0(handle);
+
+    PE_nRF24_setTXAddress(handle, addr);
+
+    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_TX);
+    PE_nRF24_setPayload(handle, data, size);
+
+    PE_nRF24_setCE1(handle);
+
+    do {
+        PE_nRF24_getRegister(handle, PE_nRF24_REG_STATUS, &status);
+
+        if (status & (PE_nRF24_IRQ_TX_DS | PE_nRF24_IRQ_MAX_RT)) {
+            break;
+        }
+    } while (wait--);
+
+    handle->status = PE_nRF24_STATUS_READY;
+
+    if (!wait) {
+        return PE_nRF24_RESULT_TIMEOUT;
+    }
+
+    return PE_nRF24_RESULT_OK;
+}
 
 int main()
 {
@@ -35,6 +71,8 @@ int main()
     if (PE_nRF24_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
+//
+//    PE_nRF24_attachIRQ(&nRF24, PE_nRF24_IRQ_TX_DS|PE_nRF24_IRQ_MAX_RT);
 
 #ifdef PE_nRF_MASTER
     const char addr[] = PE_nRF24_TEST_ADDRESS;
@@ -67,9 +105,9 @@ int main()
             data[0] = 0;
         }
 
-        if (PE_nRF24_sendPacket(&nRF24, (uint8_t *) addr, data, 32, 20) != PE_nRF24_RESULT_OK) {
-            Error_Handler(__FILE__, __LINE__);
-        }
+//        if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
+//            Error_Handler(__FILE__, __LINE__);
+//        }
 
         HAL_Delay(100);
 #endif
@@ -204,9 +242,11 @@ void MX_GPIO_Init() {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
 
     GPIO_InitStruct.Pin   = GPIO_PIN_3;
-    GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Mode  = GPIO_MODE_IT_RISING;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);

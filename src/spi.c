@@ -63,6 +63,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spi) {
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
         GPIO_InitStruct.Pin   = GPIO_PIN_5|GPIO_PIN_7;
         GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
@@ -91,6 +92,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spi) {
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 
         GPIO_InitStruct.Pin   = GPIO_PIN_13|GPIO_PIN_15;
         GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
