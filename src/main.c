@@ -68,6 +68,8 @@ int main()
         Error_Handler(__FILE__, __LINE__);
     }
 
+    HAL_Delay(20);
+
 #ifdef PE_nRF_MASTER
     const char addr[] = PE_nRF24_TEST_ADDRESS;
     uint8_t data[32];
@@ -81,12 +83,9 @@ int main()
     nRF24_configRX.autoACK     = PE_nRF24_AUTO_ACK_OFF;
     nRF24_configRX.payloadSize = 32;
 
-    if (PE_nRF24_configureRX(&nRF24_handle, &nRF24_configRX, PE_nRF24_PIPE_RX0) != PE_nRF24_RESULT_OK) {
+    if (PE_nRF24_configureRX(&nRF24, &nRF24_configRX, PE_nRF24_PIPE_RX0) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
-
-    PE_nRF24_attachRXPipe(&nRF24, PE_nRF24_PIPE_RX0);
-    PE_nRF24_attachIRQ(&nRF24, PE_nRF24_IRQ_RX_DR);
 #endif
 
     uint32_t start = HAL_GetTick();
@@ -204,10 +203,8 @@ void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
 
 #ifdef PE_nRF_SLAVE
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
-    (void) handle;
-
-    uint8_t data[32]
-
+    uint8_t data[32];
+MX_LED_ON(100);
     if (PE_nRF24_getPayload(handle, data, 32) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }

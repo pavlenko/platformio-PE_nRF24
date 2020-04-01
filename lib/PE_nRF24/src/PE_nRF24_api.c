@@ -172,18 +172,22 @@ PE_nRF24_RESULT_t PE_nRF24_getAddressWidth(PE_nRF24_t *handle, PE_nRF24_ADDR_WID
 }
 
 PE_nRF24_RESULT_t PE_nRF24_setTXAddress(PE_nRF24_t *handle, uint8_t *address) {
+    PE_nRF24_RESULT_t result;
     uint8_t width;
 
     PE_nRF24_getAddressWidth(handle, (PE_nRF24_ADDR_WIDTH_t *) &width);
 
-    if (PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_REGISTER + PE_nRF24_REG_TX_ADDR, address, width + 2) != PE_nRF24_RESULT_OK) {
-        return PE_nRF24_RESULT_ERROR;
-    }
+    PE_nRF24_setSS0(handle);
 
-    return PE_nRF24_RESULT_OK;
+    result = PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_REGISTER + PE_nRF24_REG_TX_ADDR, address, width + 2);
+
+    PE_nRF24_setSS1(handle);
+
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_setRXAddress(PE_nRF24_t *handle, uint8_t *address, PE_nRF24_PIPE_t pipe) {
+    PE_nRF24_RESULT_t result;
     uint8_t width;
 
     PE_nRF24_getAddressWidth(handle, (PE_nRF24_ADDR_WIDTH_t *) &width);
@@ -194,11 +198,13 @@ PE_nRF24_RESULT_t PE_nRF24_setRXAddress(PE_nRF24_t *handle, uint8_t *address, PE
         width += 2;
     }
 
-    if (PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_REGISTER + PE_nRF24_REG_RX_ADDR[pipe], address, width) != PE_nRF24_RESULT_OK) {
-        return PE_nRF24_RESULT_ERROR;
-    }
+    PE_nRF24_setSS0(handle);
 
-    return PE_nRF24_RESULT_OK;
+    result = PE_nRF24_sendMem(handle, PE_nRF24_CMD_W_REGISTER + PE_nRF24_REG_RX_ADDR[pipe], address, width);
+
+    PE_nRF24_setSS1(handle);
+
+    return result;
 }
 
 PE_nRF24_RESULT_t PE_nRF24_flushTX(PE_nRF24_t *handle) {
@@ -531,9 +537,14 @@ PE_nRF24_RESULT_t PE_nRF24_configureRF(PE_nRF24_t *handle) {
 PE_nRF24_RESULT_t PE_nRF24_configureRX(PE_nRF24_t *handle, PE_nRF24_configRX_t *config, PE_nRF24_PIPE_t pipe) {
     PE_nRF24_RESULT_t result = PE_nRF24_RESULT_OK;
 
+    PE_nRF24_setCE0(handle);
+
     result |= PE_nRF24_setRXAddress(handle, config->address, pipe);
     result |= PE_nRF24_setAutoACK(handle, config->autoACK, pipe);
     result |= PE_nRF24_setRegister(handle, PE_nRF24_REG_RX_PW[pipe], &(config->payloadSize));
+    result |= PE_nRF24_attachRXPipe(handle, pipe);
+
+    PE_nRF24_setCE1(handle);
 
     if (result != PE_nRF24_RESULT_OK) {
         return PE_nRF24_RESULT_ERROR;
