@@ -418,7 +418,7 @@ extern "C" {
 typedef enum {
     PE_nRF24_RESULT_OK      = 0x00U,
     PE_nRF24_RESULT_ERROR   = 0x01U,
-    PE_nRF24_RESULT_BUSY    = 0x01U,
+    PE_nRF24_RESULT_MAX_RT  = 0x01U,
     PE_nRF24_RESULT_TIMEOUT = 0x03U,
 } PE_nRF24_RESULT_t;
 
@@ -763,6 +763,10 @@ PE_nRF24_RESULT_t PE_nRF24_getRetryCount(PE_nRF24_t *handle, PE_nRF24_RETRY_COUN
  * @return
  */
 PE_nRF24_RESULT_t PE_nRF24_getCarrierDetect(PE_nRF24_t *handle, PE_nRF24_BIT_t *value);
+
+PE_nRF24_RESULT_t PE_nRF24_sendPacketFg(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size, uint16_t timeout);
+
+PE_nRF24_RESULT_t PE_nRF24_sendPacketBg(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size);
 
 /**
  * @param handle
