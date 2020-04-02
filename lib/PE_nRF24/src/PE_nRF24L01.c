@@ -135,6 +135,25 @@ PE_nRF24_RESULT_t PE_nRF24_setPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t
 }
 /* IRQ ****************************************************************************************************************/
 
+void PE_nRF24_handleIRQ_RX_DR(PE_nRF24_t *handle, uint8_t status) {
+    uint8_t statusFIFO;
+
+    PE_nRF24_setCE0(handle);
+
+    do {
+        PE_nRF24_getPayload(handle, handle->bufferData, handle->bufferSize);
+
+        status |= PE_nRF24_IRQ_MASK_RX_DR;
+
+        PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+        PE_nRF24_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
+    } while ((statusFIFO & PE_nRF24_FIFO_STATUS_RX_EMPTY) == 0x00);
+
+    PE_nRF24_setCE1(handle);
+
+    PE_nRF24_onRXComplete(handle);
+}
+
 void PE_nRF24_handleIRQ_TX_DS(PE_nRF24_t *handle, uint8_t status) {
     PE_nRF24_setCE0(handle);
 
@@ -180,22 +199,7 @@ PE_nRF24_RESULT_t PE_nRF24_handleIRQ(PE_nRF24_t *handle) {
     }
 
     if ((status & PE_nRF24_IRQ_MASK_RX_DR) != 0U) {
-        uint8_t statusFIFO;
-
-        PE_nRF24_setCE0(handle);
-
-        do {
-            PE_nRF24_getPayload(handle, handle->bufferData, handle->bufferSize);
-            PE_nRF24_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
-        } while ((statusFIFO & PE_nRF24_FIFO_STATUS_RX_EMPTY) == 0x00);
-
-        status |= PE_nRF24_IRQ_MASK_RX_DR;
-
-        PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-
-        PE_nRF24_setCE1(handle);
-
-        PE_nRF24_onRXComplete(handle);
+        PE_nRF24_handleIRQ_RX_DR(handle, status);
     }
 
     if ((status & PE_nRF24_IRQ_MASK_TX_DS) != 0U) {
@@ -613,6 +617,45 @@ PE_nRF24_RESULT_t PE_nRF24_sendPacketAndWait(PE_nRF24_t *handle, uint8_t *addr, 
     return result;
 }
 
+PE_nRF24_RESULT_t PE_nRF24_readPacketAndWait(PE_nRF24_t *handle, uint8_t *data, uint8_t size, uint16_t timeout) {
+    if (handle->status != PE_nRF24_STATUS_READY) {
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    PE_nRF24_RESULT_t result = PE_nRF24_RESULT_TIMEOUT;
+    uint8_t status;
+
+    handle->status = PE_nRF24_STATUS_BUSY_TX;
+
+    handle->bufferData = data;
+    handle->bufferSize = size;
+
+    PE_nRF24_setCE0(handle);
+
+    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
+    PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_MASK_RX_DR);
+
+    PE_nRF24_setCE1(handle);
+
+    uint32_t start = PE_nRF24_getMillis();
+    do {
+        PE_nRF24_getRegister(handle, PE_nRF24_REG_STATUS, &status);
+
+        if (status & PE_nRF24_IRQ_MASK_RX_DR) {
+            result = PE_nRF24_RESULT_OK;
+            break;
+        }
+    } while (timeout > 0 && ((PE_nRF24_getMillis() - start) < timeout));
+
+    if (result != PE_nRF24_RESULT_TIMEOUT && status & PE_nRF24_IRQ_MASK_RX_DR) {
+        PE_nRF24_handleIRQ_RX_DR(handle, status);
+    }
+
+    handle->status = PE_nRF24_STATUS_READY;
+
+    return result;
+}
+
 PE_nRF24_RESULT_t PE_nRF24_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size) {
     if (handle->status != PE_nRF24_STATUS_READY) {
         return PE_nRF24_RESULT_ERROR;
@@ -626,6 +669,26 @@ PE_nRF24_RESULT_t PE_nRF24_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, u
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_TX);
     PE_nRF24_setPayload(handle, data, size);
     PE_nRF24_attachIRQ(handle, PE_nRF24_IRQ_MASK_TX_DS|PE_nRF24_IRQ_MASK_MAX_RT);
+
+    PE_nRF24_setCE1(handle);
+
+    return PE_nRF24_RESULT_OK;
+}
+
+PE_nRF24_RESULT_t PE_nRF24_readPacketViaIRQ(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
+    if (handle->status != PE_nRF24_STATUS_READY) {
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    handle->status = PE_nRF24_STATUS_BUSY_TX;
+
+    handle->bufferData = data;
+    handle->bufferSize = size;
+
+    PE_nRF24_setCE0(handle);
+
+    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
+    PE_nRF24_attachIRQ(handle, PE_nRF24_IRQ_MASK_RX_DR);
 
     PE_nRF24_setCE1(handle);
 

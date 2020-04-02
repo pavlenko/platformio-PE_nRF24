@@ -43,10 +43,8 @@ int main()
         Error_Handler(__FILE__, __LINE__);
     }
 
-#ifdef PE_nRF_MASTER
     const char addr[] = PE_nRF24_TEST_ADDRESS;
     uint8_t data[32];
-#endif
 
 #ifdef PE_nRF_SLAVE
     // Initialize RX
@@ -84,6 +82,12 @@ int main()
         MX_LED_OFF(0);
 #endif
 #ifdef PE_nRF_SLAVE
+        if (nRF24.status == PE_nRF24_STATUS_READY) {
+            if (PE_nRF24_readPacketViaIRQ(&nRF24, data, 32) != PE_nRF24_RESULT_OK) {
+                Error_Handler(__FILE__, __LINE__);
+            }
+        }
+
         MX_LED_OFF(0);
 #endif
     }
@@ -169,28 +173,17 @@ void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
 
 }
 
+#ifdef PE_nRF_MASTER
 void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
     (void) handle;
-    MX_LED_ON(2);
+    MX_LED_ON(5);
 }
+#endif
 
 #ifdef PE_nRF_SLAVE
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
-    //TODO check rx logic, maybe create fixed buffers in handle instead of pass outside, optimize private irq handlers
-//    uint8_t data[32];
-
-//    if (PE_nRF24_getPayload(handle, data, 32) != PE_nRF24_RESULT_OK) {
-//        Error_Handler(__FILE__, __LINE__);
-//    }
-
-//    if (data[0] > 0) {
-        MX_LED_ON(5);
-//    }
-}
-#else
-void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
     (void) handle;
-    //MX_LED_ON(2);
+    MX_LED_ON(5);
 }
 #endif
 

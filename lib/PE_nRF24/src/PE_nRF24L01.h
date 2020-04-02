@@ -802,9 +802,28 @@ PE_nRF24_RESULT_t PE_nRF24_sendPacketAndWait(PE_nRF24_t *handle, uint8_t *addr, 
  * @param addr
  * @param data
  * @param size
+ * @param timeout
+ * @return
+ */
+PE_nRF24_RESULT_t PE_nRF24_readPacketAndWait(PE_nRF24_t *handle, uint8_t *data, uint8_t size, uint16_t timeout);
+
+/**
+ * @param handle
+ * @param addr
+ * @param data
+ * @param size
  * @return
  */
 PE_nRF24_RESULT_t PE_nRF24_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size);
+
+/**
+ * @param handle
+ * @param addr
+ * @param data
+ * @param size
+ * @return
+ */
+PE_nRF24_RESULT_t PE_nRF24_readPacketViaIRQ(PE_nRF24_t *handle, uint8_t *data, uint8_t size);
 
 /**
  * @param handle
