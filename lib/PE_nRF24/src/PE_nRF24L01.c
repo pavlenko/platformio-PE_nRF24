@@ -133,6 +133,94 @@ PE_nRF24_RESULT_t PE_nRF24_setPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t
 
     return result;
 }
+/* IRQ ****************************************************************************************************************/
+
+void PE_nRF24_handleIRQ_TX_DS(PE_nRF24_t *handle, uint8_t status) {
+    PE_nRF24_setCE0(handle);
+
+    status |= PE_nRF24_IRQ_MASK_TX_DS;
+
+    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
+    PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+
+    PE_nRF24_setCE1(handle);
+
+    handle->status = PE_nRF24_STATUS_READY;
+
+    PE_nRF24_onTXComplete(handle);
+}
+
+void PE_nRF24_handleIRQ_MAX_RT(PE_nRF24_t *handle, uint8_t status) {
+    PE_nRF24_flushTX(handle);
+
+    PE_nRF24_setPowerMode(handle, PE_nRF24_POWER_OFF);
+    PE_nRF24_setPowerMode(handle, PE_nRF24_POWER_ON);
+
+    PE_nRF24_setCE0(handle);
+
+    status |= PE_nRF24_IRQ_MASK_MAX_RT;
+
+    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
+    PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+
+    PE_nRF24_setCE1(handle);
+
+    handle->status = PE_nRF24_STATUS_READY;
+
+    PE_nRF24_onMaxRetransmit(handle);
+}
+
+PE_nRF24_RESULT_t PE_nRF24_handleIRQ(PE_nRF24_t *handle) {
+    uint8_t status;
+
+    if (PE_nRF24_getRegister(handle, PE_nRF24_REG_STATUS, &status) != PE_nRF24_RESULT_OK) {
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    if ((status & PE_nRF24_IRQ_MASK_RX_DR) != 0U) {
+        uint8_t statusFIFO;
+
+        PE_nRF24_setCE0(handle);
+
+        do {
+            PE_nRF24_getPayload(handle, handle->bufferData, handle->bufferSize);
+            PE_nRF24_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
+        } while ((statusFIFO & PE_nRF24_FIFO_STATUS_RX_EMPTY) == 0x00);
+
+        status |= PE_nRF24_IRQ_MASK_RX_DR;
+
+        PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+
+        PE_nRF24_setCE1(handle);
+
+        PE_nRF24_onRXComplete(handle);
+    }
+
+    if ((status & PE_nRF24_IRQ_MASK_TX_DS) != 0U) {
+        PE_nRF24_handleIRQ_TX_DS(handle, status);
+    }
+
+    if ((status & PE_nRF24_IRQ_MASK_MAX_RT) != 0U) {
+        PE_nRF24_handleIRQ_MAX_RT(handle, status);
+    }
+
+    return PE_nRF24_RESULT_OK;
+}
+
+__attribute__((weak))
+void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
+    (void) handle;
+}
+
+__attribute__((weak))
+void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
+    (void) handle;
+}
+
+__attribute__((weak))
+void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
+    (void) handle;
+}
 
 /* API ****************************************************************************************************************/
 
@@ -508,22 +596,15 @@ PE_nRF24_RESULT_t PE_nRF24_sendPacketFg(PE_nRF24_t *handle, uint8_t *addr, uint8
         }
     } while (timeout > 0 && ((PE_nRF24_getMillis() - start) < timeout));
 
-    //TODO check timeout before
-    if (status & PE_nRF24_IRQ_MASK_TX_DS) {
-        //TODO process tx
-        PE_nRF24_onTXComplete(handle);
-    } else {
-        //TODO process max rt
-        PE_nRF24_onMaxRetransmit(handle);
-        result = PE_nRF24_RESULT_MAX_RT;
+    if (result != PE_nRF24_RESULT_TIMEOUT) {
+        if (status & PE_nRF24_IRQ_MASK_TX_DS) {
+            PE_nRF24_handleIRQ_TX_DS(handle, status);
+        }
+
+        if (status & PE_nRF24_IRQ_MASK_MAX_RT) {
+            PE_nRF24_handleIRQ_MAX_RT(handle, status);
+        }
     }
-
-    status |= PE_nRF24_IRQ_MASK_TX_DS|PE_nRF24_IRQ_MASK_MAX_RT;
-
-    PE_nRF24_setCE0(handle);
-    PE_nRF24_flushTX(handle);
-    PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-    PE_nRF24_setCE1(handle);
 
     handle->status = PE_nRF24_STATUS_READY;
 
@@ -654,87 +735,4 @@ PE_nRF24_RESULT_t PE_nRF24_configureRX(PE_nRF24_t *handle, PE_nRF24_configRX_t *
 __attribute__((weak))
 uint32_t PE_nRF24_getMillis(void) {
     return 0;
-}
-
-/* IRQ ****************************************************************************************************************/
-
-PE_nRF24_RESULT_t PE_nRF24_handleIRQ(PE_nRF24_t *handle) {
-    uint8_t status;
-
-    if (PE_nRF24_getRegister(handle, PE_nRF24_REG_STATUS, &status) != PE_nRF24_RESULT_OK) {
-        return PE_nRF24_RESULT_ERROR;
-    }
-
-    if ((status & PE_nRF24_IRQ_MASK_RX_DR) != 0U) {
-        uint8_t statusFIFO;
-
-        PE_nRF24_setCE0(handle);
-
-        do {
-            PE_nRF24_getPayload(handle, handle->bufferData, handle->bufferSize);
-            PE_nRF24_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
-        } while ((statusFIFO & PE_nRF24_FIFO_STATUS_RX_EMPTY) == 0x00);
-
-        status |= PE_nRF24_IRQ_MASK_RX_DR;
-
-        PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-
-        PE_nRF24_setCE1(handle);
-
-        PE_nRF24_onRXComplete(handle);
-    }
-
-    if ((status & PE_nRF24_IRQ_MASK_TX_DS) != 0U) {
-        PE_nRF24_setCE0(handle);
-
-        status |= PE_nRF24_IRQ_MASK_TX_DS;
-
-        PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
-        //TODO disable IRQ?
-        PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-
-        PE_nRF24_setCE1(handle);
-
-        handle->status = PE_nRF24_STATUS_READY;
-
-        PE_nRF24_onTXComplete(handle);
-    }
-
-    if ((status & PE_nRF24_IRQ_MASK_MAX_RT) != 0U) {
-        PE_nRF24_flushTX(handle);
-
-        PE_nRF24_setPowerMode(handle, PE_nRF24_POWER_OFF);
-        PE_nRF24_setPowerMode(handle, PE_nRF24_POWER_ON);
-
-        PE_nRF24_setCE0(handle);
-
-        status |= PE_nRF24_IRQ_MASK_MAX_RT;
-
-        PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
-        //TODO disable IRQ?
-        PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-
-        PE_nRF24_setCE1(handle);
-
-        handle->status = PE_nRF24_STATUS_READY;
-
-        PE_nRF24_onMaxRetransmit(handle);
-    }
-
-    return PE_nRF24_RESULT_OK;
-}
-
-__attribute__((weak))
-void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
-    (void) handle;
-}
-
-__attribute__((weak))
-void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
-    (void) handle;
-}
-
-__attribute__((weak))
-void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
-    (void) handle;
 }

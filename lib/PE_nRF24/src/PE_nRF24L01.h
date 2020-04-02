@@ -600,6 +600,29 @@ void PE_nRF24_setSS0(PE_nRF24_t *handle);
  */
 void PE_nRF24_setSS1(PE_nRF24_t *handle);
 
+/* IRQ ****************************************************************************************************************/
+
+/**
+* @param handle
+* @return
+*/
+PE_nRF24_RESULT_t PE_nRF24_handleIRQ(PE_nRF24_t *handle);
+
+/**
+ * @param handle
+ */
+void PE_nRF24_onTXComplete(PE_nRF24_t *handle);
+
+/**
+ * @param handle
+ */
+void PE_nRF24_onRXComplete(PE_nRF24_t *handle);
+
+/**
+ * @param handle
+ */
+void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle);
+
 /* API ****************************************************************************************************************/
 
 /**
@@ -796,29 +819,6 @@ PE_nRF24_RESULT_t PE_nRF24_configureRX(PE_nRF24_t *handle, PE_nRF24_configRX_t *
  * @return
  */
 uint32_t PE_nRF24_getMillis(void);
-
-/* IRQ ****************************************************************************************************************/
-
-/**
-* @param handle
-* @return
-*/
-PE_nRF24_RESULT_t PE_nRF24_handleIRQ(PE_nRF24_t *handle);
-
-/**
- * @param handle
- */
-void PE_nRF24_onTXComplete(PE_nRF24_t *handle);
-
-/**
- * @param handle
- */
-void PE_nRF24_onRXComplete(PE_nRF24_t *handle);
-
-/**
- * @param handle
- */
-void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle);
 
 #ifdef __cplusplus
 }
