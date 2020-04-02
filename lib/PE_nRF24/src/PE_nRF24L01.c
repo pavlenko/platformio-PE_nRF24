@@ -142,6 +142,7 @@ void PE_nRF24_handleIRQ_TX_DS(PE_nRF24_t *handle, uint8_t status) {
 
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
     PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+    PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_MASK_TX_DS);
 
     PE_nRF24_setCE1(handle);
 
@@ -162,6 +163,7 @@ void PE_nRF24_handleIRQ_MAX_RT(PE_nRF24_t *handle, uint8_t status) {
 
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_RX);
     PE_nRF24_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+    PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_MASK_MAX_RT);
 
     PE_nRF24_setCE1(handle);
 
@@ -567,7 +569,7 @@ PE_nRF24_RESULT_t PE_nRF24_getCarrierDetect(PE_nRF24_t *handle, PE_nRF24_BIT_t *
     return PE_nRF24_RESULT_OK;
 }
 
-PE_nRF24_RESULT_t PE_nRF24_sendPacketFg(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size, uint16_t timeout) {
+PE_nRF24_RESULT_t PE_nRF24_sendPacketAndWait(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size, uint16_t timeout) {
     if (handle->status != PE_nRF24_STATUS_READY) {
         return PE_nRF24_RESULT_ERROR;
     }
@@ -611,7 +613,7 @@ PE_nRF24_RESULT_t PE_nRF24_sendPacketFg(PE_nRF24_t *handle, uint8_t *addr, uint8
     return result;
 }
 
-PE_nRF24_RESULT_t PE_nRF24_sendPacketBg(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size) {
+PE_nRF24_RESULT_t PE_nRF24_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size) {
     if (handle->status != PE_nRF24_STATUS_READY) {
         return PE_nRF24_RESULT_ERROR;
     }
@@ -623,39 +625,9 @@ PE_nRF24_RESULT_t PE_nRF24_sendPacketBg(PE_nRF24_t *handle, uint8_t *addr, uint8
     PE_nRF24_setTXAddress(handle, addr);
     PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_TX);
     PE_nRF24_setPayload(handle, data, size);
-    //TODO enable irq
-    PE_nRF24_setCE1(handle);
-
-    return PE_nRF24_RESULT_OK;
-}
-
-PE_nRF24_RESULT_t PE_nRF24_sendPacket(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size, uint16_t timeout) {
-    if (handle->status != PE_nRF24_STATUS_READY) {
-        return PE_nRF24_RESULT_ERROR;
-    }
-
-    handle->status = PE_nRF24_STATUS_BUSY_TX;
-
-    PE_nRF24_setCE0(handle);
-
-    PE_nRF24_setTXAddress(handle, addr);
-    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_TX);
-    PE_nRF24_setPayload(handle, data, size);
+    PE_nRF24_attachIRQ(handle, PE_nRF24_IRQ_MASK_TX_DS|PE_nRF24_IRQ_MASK_MAX_RT);
 
     PE_nRF24_setCE1(handle);
-
-    uint32_t start = PE_nRF24_getMillis() ;
-
-    do {
-        if (handle->status == PE_nRF24_STATUS_READY) {
-            break;
-        }
-    } while (timeout > 0 && ((PE_nRF24_getMillis() - start) < timeout));
-
-    if (handle->status != PE_nRF24_STATUS_READY) {
-        handle->status = PE_nRF24_STATUS_READY;
-        return PE_nRF24_RESULT_TIMEOUT;
-    }
 
     return PE_nRF24_RESULT_OK;
 }
@@ -695,9 +667,7 @@ PE_nRF24_RESULT_t PE_nRF24_configureRF(PE_nRF24_t *handle) {
     result |= PE_nRF24_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX4);
     result |= PE_nRF24_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX5);
 
-    result |= PE_nRF24_attachIRQ(handle, PE_nRF24_IRQ_TX_DS);
-    result |= PE_nRF24_attachIRQ(handle, PE_nRF24_IRQ_RX_DR);
-    result |= PE_nRF24_attachIRQ(handle, PE_nRF24_IRQ_MAX_RT);
+    result |= PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_MASK_ALL);
 
     result |= PE_nRF24_flushTX(handle);
     result |= PE_nRF24_flushRX(handle);

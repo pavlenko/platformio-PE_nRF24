@@ -76,7 +76,7 @@ int main()
         if (HAL_GetTick() - start > 100) {
             start = HAL_GetTick();
 
-            if (PE_nRF24_sendPacket(&nRF24, (uint8_t *) addr, data, 32, 100) != PE_nRF24_RESULT_OK) {
+            if (PE_nRF24_sendPacketViaIRQ(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
                 Error_Handler(__FILE__, __LINE__);
             }
         }
