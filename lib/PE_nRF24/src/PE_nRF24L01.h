@@ -1,11 +1,14 @@
-#ifndef PE_NRF24_IRQ_H
-#define PE_NRF24_IRQ_H
+#ifndef PE_NRF24L01_H
+#define PE_NRF24L01_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "PE_nRF24_def.h"
+#include "PE_nRF24_api.h"
+#include "PE_nRF24_spi.h"
+
+/* IRQ ****************************************************************************************************************/
 
 /**
 * @param handle
@@ -32,4 +35,4 @@ void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle);
 }
 #endif
 
-#endif //PE_NRF24_IRQ_H
+#endif //PE_NRF24L01_H

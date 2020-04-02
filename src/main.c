@@ -2,8 +2,8 @@
 
 #include <PE_Button.h>
 #include <PE_nRF24_api.h>
-#include <PE_nRF24_irq.h>
 #include <PE_nRF24_spi.h>
+#include <PE_nRF24L01.h>
 
 #include "led.h"
 #include "spi.h"
@@ -121,12 +121,12 @@ int main()
 }
 
 void PE_Button_onPress(PE_Button_Key_t *key) {
-    MX_LED_ON(1);
+    //MX_LED_ON(1);
     (void) key;
 }
 
 void PE_Button_onHoldRepeated(PE_Button_Key_t *key) {
-    MX_LED_ON(1);
+    //MX_LED_ON(1);
     (void) key;
 }
 
@@ -202,7 +202,7 @@ void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
 
 void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
     (void) handle;
-    MX_LED_ON(2);
+    //MX_LED_ON(2);
 }
 
 #ifdef PE_nRF_SLAVE
