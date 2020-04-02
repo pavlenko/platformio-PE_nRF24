@@ -14,7 +14,7 @@ void MX_SPI1_Init(SPI_HandleTypeDef* spi) {
     spi->Init.CLKPolarity       = SPI_POLARITY_LOW;
     spi->Init.CLKPhase          = SPI_PHASE_1EDGE;
     spi->Init.NSS               = SPI_NSS_SOFT;
-    spi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+    spi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
     spi->Init.FirstBit          = SPI_FIRSTBIT_MSB;
     spi->Init.TIMode            = SPI_TIMODE_DISABLE;
     spi->Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
@@ -34,7 +34,7 @@ void MX_SPI2_Init(SPI_HandleTypeDef* spi) {
     spi->Init.CLKPolarity       = SPI_POLARITY_LOW;
     spi->Init.CLKPhase          = SPI_PHASE_1EDGE;
     spi->Init.NSS               = SPI_NSS_SOFT;
-    spi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+    spi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
     spi->Init.FirstBit          = SPI_FIRSTBIT_MSB;
     spi->Init.TIMode            = SPI_TIMODE_DISABLE;
     spi->Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;

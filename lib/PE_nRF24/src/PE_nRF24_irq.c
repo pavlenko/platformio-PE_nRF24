@@ -40,10 +40,8 @@ static PE_nRF24_RESULT_t PE_nRF24_handleIRQ_RX_DR(PE_nRF24_t *handle)
     PE_nRF24_setCE0(handle);
 
     do {
-        // Read payload to internal buffer
-        if (handle->bufferData != NULL && handle->bufferSize > 0) {
-            PE_nRF24_getPayload(handle, handle->bufferData, handle->bufferSize);
-        }
+        // Read payload to internal buffer, it must exists for proper work
+        PE_nRF24_getPayload(handle, handle->bufferData, handle->bufferSize);
 
         // Clear pending IRQ
         PE_nRF24_clearIRQ(handle);

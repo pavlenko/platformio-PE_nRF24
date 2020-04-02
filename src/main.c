@@ -16,7 +16,10 @@ SPI_HandleTypeDef SPIn;
 void SystemClock_Config(void);
 void MX_GPIO_Init();
 
-#define nRF24_WAIT_TIMEOUT         (uint32_t) 100
+uint8_t rxBuffer[32];
+uint8_t txBuffer[32];
+
+#define nRF24_WAIT_TIMEOUT (uint32_t) 100
 
 PE_nRF24_RESULT_t nRF24_transmitPacket(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size)
 {
@@ -57,18 +60,19 @@ int main()
     MX_SPI1_Init(&SPIn);
 
     nRF24.config.addressWidth = PE_nRF24_ADDR_WIDTH_3BIT;
-    nRF24.config.dataRate     = PE_nRF24_DATA_RATE_1000KBPS;
+    nRF24.config.dataRate     = PE_nRF24_DATA_RATE__250KBPS;
     nRF24.config.rfChannel    = 1;
     nRF24.config.crcScheme    = PE_nRF24_CRC_SCHEME_OFF;
     nRF24.config.txPower      = PE_nRF24_TX_POWER__6dBm;
     nRF24.config.retryCount   = 0;
     nRF24.config.retryDelay   = 0;
 
+    nRF24.bufferData = rxBuffer;
+    nRF24.bufferSize = 32;
+
     if (PE_nRF24_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
-
-    HAL_Delay(20);
 
 #ifdef PE_nRF_MASTER
     const char addr[] = PE_nRF24_TEST_ADDRESS;
@@ -100,7 +104,7 @@ int main()
             data[0] = 0;
         }
 
-        if (HAL_GetTick() - start > 100) {
+        if (HAL_GetTick() - start > 250) {
             start = HAL_GetTick();
 
             if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
@@ -203,20 +207,21 @@ void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
 
 #ifdef PE_nRF_SLAVE
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
-    uint8_t data[32];
-MX_LED_ON(100);
-    if (PE_nRF24_getPayload(handle, data, 32) != PE_nRF24_RESULT_OK) {
-        Error_Handler(__FILE__, __LINE__);
-    }
+    //TODO check rx logic, maybe create fixed buffers in handle instead of pass outside, optimize private irq handlers
+//    uint8_t data[32];
 
-    if (data[0] > 0) {
-        MX_LED_ON(100);
-    }
+//    if (PE_nRF24_getPayload(handle, data, 32) != PE_nRF24_RESULT_OK) {
+//        Error_Handler(__FILE__, __LINE__);
+//    }
+
+//    if (data[0] > 0) {
+        MX_LED_ON(5);
+//    }
 }
 #else
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
     (void) handle;
-    MX_LED_ON(2);
+    //MX_LED_ON(2);
 }
 #endif
 
@@ -227,7 +232,7 @@ void EXTI3_IRQHandler(void) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_3) {
         if (PE_nRF24_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
-            MX_LED_ON(2);
+            //MX_LED_ON(2);
         }
     }
 }
