@@ -1,8 +1,6 @@
 #include "main.h"
 
 #include <PE_Button.h>
-#include <PE_nRF24_api.h>
-#include <PE_nRF24_spi.h>
 #include <PE_nRF24L01.h>
 
 #include "led.h"
@@ -20,35 +18,6 @@ uint8_t rxBuffer[32];
 uint8_t txBuffer[32];
 
 #define nRF24_WAIT_TIMEOUT (uint32_t) 100
-
-PE_nRF24_RESULT_t nRF24_transmitPacket(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size)
-{
-    volatile uint32_t wait = nRF24_WAIT_TIMEOUT;
-
-    handle->status = PE_nRF24_STATUS_BUSY_TX;
-
-    PE_nRF24_setCE0(handle);
-
-    PE_nRF24_setTXAddress(handle, addr);
-    PE_nRF24_setDirection(handle, PE_nRF24_DIRECTION_TX);
-    PE_nRF24_setPayload(handle, data, size);
-
-    PE_nRF24_setCE1(handle);
-
-    do {
-        if (handle->status == PE_nRF24_STATUS_READY) {
-            break;
-        }
-    } while (wait--);
-
-    handle->status = PE_nRF24_STATUS_READY;
-
-    if (!wait) {
-        return PE_nRF24_RESULT_TIMEOUT;
-    }
-
-    return PE_nRF24_RESULT_OK;
-}
 
 int main()
 {
@@ -104,10 +73,10 @@ int main()
             data[0] = 0;
         }
 
-        if (HAL_GetTick() - start > 250) {
+        if (HAL_GetTick() - start > 100) {
             start = HAL_GetTick();
 
-            if (nRF24_transmitPacket(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
+            if (PE_nRF24_sendPacket(&nRF24, (uint8_t *) addr, data, 32, 100) != PE_nRF24_RESULT_OK) {
                 Error_Handler(__FILE__, __LINE__);
             }
         }
@@ -202,7 +171,7 @@ void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
 
 void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
     (void) handle;
-    //MX_LED_ON(2);
+    MX_LED_ON(2);
 }
 
 #ifdef PE_nRF_SLAVE
