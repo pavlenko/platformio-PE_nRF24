@@ -133,6 +133,7 @@ PE_nRF24_RESULT_t PE_nRF24_setPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t
 
     return result;
 }
+
 /* IRQ ****************************************************************************************************************/
 
 void PE_nRF24_handleIRQ_RX_DR(PE_nRF24_t *handle, uint8_t status) {
@@ -149,7 +150,11 @@ void PE_nRF24_handleIRQ_RX_DR(PE_nRF24_t *handle, uint8_t status) {
         PE_nRF24_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
     } while ((statusFIFO & PE_nRF24_FIFO_STATUS_RX_EMPTY) == 0x00);
 
+    PE_nRF24_detachIRQ(handle, PE_nRF24_IRQ_MASK_RX_DR);
+
     PE_nRF24_setCE1(handle);
+
+    handle->status = PE_nRF24_STATUS_READY;
 
     PE_nRF24_onRXComplete(handle);
 }

@@ -82,10 +82,16 @@ int main()
         MX_LED_OFF(0);
 #endif
 #ifdef PE_nRF_SLAVE
-        if (nRF24.status == PE_nRF24_STATUS_READY) {
-            if (PE_nRF24_readPacketViaIRQ(&nRF24, data, 32) != PE_nRF24_RESULT_OK) {
-                Error_Handler(__FILE__, __LINE__);
-            }
+        if (PE_nRF24_readPacketViaIRQ(&nRF24, data, 32) != PE_nRF24_RESULT_OK) {
+            Error_Handler(__FILE__, __LINE__);
+        }
+
+        while (nRF24.status != PE_nRF24_STATUS_READY) {
+            MX_LED_OFF(0);
+        }
+
+        if (data[0] == 0) {
+            //MX_LED_ON(50);
         }
 
         MX_LED_OFF(0);
