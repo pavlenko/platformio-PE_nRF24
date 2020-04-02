@@ -100,12 +100,12 @@ int main()
 }
 
 void PE_Button_onPress(PE_Button_Key_t *key) {
-    //MX_LED_ON(1);
+    MX_LED_ON(10);
     (void) key;
 }
 
 void PE_Button_onHoldRepeated(PE_Button_Key_t *key) {
-    //MX_LED_ON(1);
+    MX_LED_ON(10);
     (void) key;
 }
 
@@ -180,10 +180,10 @@ void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
 }
 
 #ifdef PE_nRF_MASTER
-void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
-    (void) handle;
-    MX_LED_ON(5);
-}
+//void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
+//    (void) handle;
+//    MX_LED_ON(5);
+//}
 #endif
 
 #ifdef PE_nRF_SLAVE
