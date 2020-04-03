@@ -555,6 +555,7 @@ typedef struct {
 } PE_nRF24_configRX_t;
 
 typedef struct {
+    uint8_t payloadWidth;
     PE_nRF24_STATUS_t status;
     PE_nRF24_configRF_t config;
 
@@ -612,6 +613,28 @@ void PE_nRF24L01_setSS0(PE_nRF24_t *handle);
  * @param handle
  */
 void PE_nRF24L01_setSS1(PE_nRF24_t *handle);
+
+/* DATA ***************************************************************************************************************/
+
+/**
+ * @param handle
+ * @param addr
+ * @param byte
+ * @return
+ */
+PE_nRF24_RESULT_t PE_nRF24L01_getRegister(PE_nRF24_t *handle, uint8_t addr, uint8_t *byte);
+
+/**
+ * @param handle
+ * @param addr
+ * @param byte
+ * @return
+ */
+PE_nRF24_RESULT_t PE_nRF24L01_setRegister(PE_nRF24_t *handle, uint8_t addr, uint8_t *byte);
+
+PE_nRF24_RESULT_t PE_nRF24L01_getPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t size);
+
+PE_nRF24_RESULT_t PE_nRF24L01_setTXPayload(PE_nRF24_t *handle, uint8_t *data);
 
 /* IRQ ****************************************************************************************************************/
 

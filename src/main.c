@@ -14,11 +14,6 @@ SPI_HandleTypeDef SPIn;
 void SystemClock_Config(void);
 void MX_GPIO_Init();
 
-uint8_t rxBuffer[32];
-uint8_t txBuffer[32];
-
-#define nRF24_WAIT_TIMEOUT (uint32_t) 100
-
 int main()
 {
     HAL_Init();
@@ -28,42 +23,30 @@ int main()
     MX_LED_OFF(1);
     MX_SPI1_Init(&SPIn);
 
-    nRF24.config.addressWidth = PE_nRF24_ADDR_WIDTH_3BIT;
-    nRF24.config.dataRate     = PE_nRF24_DATA_RATE__250KBPS;
-    nRF24.config.rfChannel    = 1;
-    nRF24.config.crcScheme    = PE_nRF24_CRC_SCHEME_OFF;
-    nRF24.config.txPower      = PE_nRF24_TX_POWER__6dBm;
-    nRF24.config.retryCount   = 0;
-    nRF24.config.retryDelay   = 0;
+    PE_nRF24_Config_t config;
 
-    nRF24.bufferData = rxBuffer;
-    nRF24.bufferSize = 32;
+    config.rfChannel    = 1;
+    config.payloadWidth = 1;
+    config.crcScheme    = PE_nRF24_CRC_SCHEME_1BYTE;
+    config.txPower      = PE_nRF24_TX_POWER_18dBm;
+    config.dataRate     = PE_nRF24_DATA_RATE__250KBPS;
+    config.retryCount   = PE_nRF24_RETRY_COUNT__1;
+    config.retryDelay   = PE_nRF24_RETRY_DELAY_1000us;
+    config.addressWidth = PE_nRF24_ADDR_WIDTH_5BIT;
+    config.addressRX    = (uint8_t *) PE_nRF24_TEST_ADDRESS;
+    config.addressTX    = (uint8_t *) PE_nRF24_TEST_ADDRESS;
 
-    if (PE_nRF24L01_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
+    if (PE_nRF24L01_initialize(&nRF24, &config) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
-
-    const char addr[] = PE_nRF24_TEST_ADDRESS;
-    uint8_t data[32];
-
-#ifdef PE_nRF_SLAVE
-    // Initialize RX
-    PE_nRF24_configRX_t nRF24_configRX;
-
-    nRF24_configRX.address     = (uint8_t *) PE_nRF24_TEST_ADDRESS;
-    nRF24_configRX.autoACK     = PE_nRF24_AUTO_ACK_OFF;
-    nRF24_configRX.payloadSize = 32;
-
-    if (PE_nRF24_configureRX(&nRF24, &nRF24_configRX, PE_nRF24_PIPE_RX0) != PE_nRF24_RESULT_OK) {
-        Error_Handler(__FILE__, __LINE__);
-    }
-#endif
 
     uint32_t start = HAL_GetTick();
 
     while (1) {
 #ifdef PE_nRF_MASTER
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
+
+        uint8_t data[config.payloadWidth];
 
         if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
             data[0] = 1;
@@ -74,9 +57,13 @@ int main()
         if (HAL_GetTick() - start > 100) {
             start = HAL_GetTick();
 
-            if (PE_nRF24L01_sendPacketViaIRQ(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
-                Error_Handler(__FILE__, __LINE__);
-            }
+            PE_nRF24L01_setCE0(&nRF24);
+
+            PE_nRF24L01_setDirection(&nRF24, PE_nRF24_DIRECTION_TX);
+            PE_nRF24L01_flushTX(&nRF24);
+            PE_nRF24L01_setTXPayload(&nRF24, data);
+
+            PE_nRF24L01_setCE1(&nRF24);
         }
 
         MX_LED_OFF(0);
