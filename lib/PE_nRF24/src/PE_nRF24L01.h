@@ -559,8 +559,7 @@ typedef struct {
     PE_nRF24_STATUS_t status;
     PE_nRF24_configRF_t config;
 
-    uint8_t *bufferData;
-    uint8_t bufferSize;
+    uint8_t buffer[32];
 } PE_nRF24_t;
 
 typedef struct {
@@ -632,7 +631,7 @@ PE_nRF24_RESULT_t PE_nRF24L01_getRegister(PE_nRF24_t *handle, uint8_t addr, uint
  */
 PE_nRF24_RESULT_t PE_nRF24L01_setRegister(PE_nRF24_t *handle, uint8_t addr, uint8_t *byte);
 
-PE_nRF24_RESULT_t PE_nRF24L01_getPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t size);
+PE_nRF24_RESULT_t PE_nRF24L01_getRXPayload(PE_nRF24_t *handle, uint8_t *data);
 
 PE_nRF24_RESULT_t PE_nRF24L01_setTXPayload(PE_nRF24_t *handle, uint8_t *data);
 

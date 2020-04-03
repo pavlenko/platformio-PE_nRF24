@@ -106,13 +106,11 @@ PE_nRF24_RESULT_t PE_nRF24L01_setRegister(PE_nRF24_t *handle, uint8_t addr, uint
     return result;
 }
 
-PE_nRF24_RESULT_t PE_nRF24L01_getPayload(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
+PE_nRF24_RESULT_t PE_nRF24L01_getRXPayload(PE_nRF24_t *handle, uint8_t *data) {
     PE_nRF24_RESULT_t result;
 
     PE_nRF24L01_setSS0(handle);
-
-    result = PE_nRF24L01_readMem(handle, PE_nRF24_CMD_R_RX_PAYLOAD, data, size);
-
+    result = PE_nRF24L01_readMem(handle, PE_nRF24_CMD_R_RX_PAYLOAD, data, handle->payloadWidth);
     PE_nRF24L01_setSS1(handle);
 
     return result;
@@ -122,9 +120,7 @@ PE_nRF24_RESULT_t PE_nRF24L01_setTXPayload(PE_nRF24_t *handle, uint8_t *data) {
     PE_nRF24_RESULT_t result;
 
     PE_nRF24L01_setSS0(handle);
-
     result = PE_nRF24L01_sendMem(handle, PE_nRF24_CMD_W_TX_PAYLOAD, data, handle->payloadWidth);
-
     PE_nRF24L01_setSS1(handle);
 
     return result;
@@ -133,20 +129,14 @@ PE_nRF24_RESULT_t PE_nRF24L01_setTXPayload(PE_nRF24_t *handle, uint8_t *data) {
 /* IRQ ****************************************************************************************************************/
 
 void PE_nRF24L01_handleIRQ_RX_DR(PE_nRF24_t *handle, uint8_t status) {
-    uint8_t statusFIFO;
-
     PE_nRF24L01_setCE0(handle);
 
-    do {
-        PE_nRF24L01_getPayload(handle, handle->bufferData, handle->bufferSize);
+    PE_nRF24L01_getRXPayload(handle, handle->buffer);
 
-        status |= PE_nRF24_IRQ_MASK_RX_DR;
+    status |= PE_nRF24_IRQ_MASK_RX_DR;
 
-        PE_nRF24L01_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-        PE_nRF24L01_getRegister(handle, PE_nRF24_REG_FIFO_STATUS, &statusFIFO);
-    } while ((statusFIFO & PE_nRF24_FIFO_STATUS_RX_EMPTY) == 0x00);
-
-    PE_nRF24L01_detachIRQ(handle, PE_nRF24_IRQ_MASK_RX_DR);
+    PE_nRF24L01_setRegister(handle, PE_nRF24_REG_STATUS, &status);
+    PE_nRF24L01_flushRX(handle);
 
     PE_nRF24L01_setCE1(handle);
 

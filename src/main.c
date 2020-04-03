@@ -14,6 +14,8 @@ SPI_HandleTypeDef SPIn;
 void SystemClock_Config(void);
 void MX_GPIO_Init();
 
+volatile uint8_t val1 = 0;
+
 int main()
 {
     HAL_Init();
@@ -46,13 +48,7 @@ int main()
 #ifdef PE_nRF_MASTER
         PE_Button_dispatchKey(&key1, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == 0, HAL_GetTick());
 
-        uint8_t data[config.payloadWidth];
-
-        if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
-            data[0] = 1;
-        } else {
-            data[0] = 0;
-        }
+        uint8_t data[] = {val1};
 
         if (HAL_GetTick() - start > 100) {
             start = HAL_GetTick();
@@ -69,34 +65,25 @@ int main()
         MX_LED_OFF(0);
 #endif
 #ifdef PE_nRF_SLAVE
-        if (PE_nRF24L01_readPacketViaIRQ(&nRF24, data, 32) != PE_nRF24_RESULT_OK) {
-            Error_Handler(__FILE__, __LINE__);
-        }
-
-        while (nRF24.status != PE_nRF24_STATUS_READY) {
-            MX_LED_OFF(0);
-        }
-
-        if (data[0] == 0) {
-            //MX_LED_ON(50);
-        }
-
         MX_LED_OFF(0);
 #endif
     }
 }
 
 void PE_Button_onPress(PE_Button_Key_t *key) {
+    val1 = 1;
     MX_LED_ON(10);
     (void) key;
 }
 
 void PE_Button_onHoldRepeated(PE_Button_Key_t *key) {
+    val1 = 1;
     MX_LED_ON(10);
     (void) key;
 }
 
 void PE_Button_onRelease(PE_Button_Key_t *key) {
+    val1 = 0;
     MX_LED_OFF(0);
     (void) key;
 }
@@ -175,6 +162,7 @@ void PE_nRF24L01_onMaxRetransmit(PE_nRF24_t *handle) {
 
 #ifdef PE_nRF_SLAVE
 void PE_nRF24_onRXComplete(PE_nRF24_t *handle) {
+    val1 = 1;
     (void) handle;
     MX_LED_ON(5);
 }
