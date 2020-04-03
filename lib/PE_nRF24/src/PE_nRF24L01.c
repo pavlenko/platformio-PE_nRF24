@@ -707,7 +707,7 @@ PE_nRF24_RESULT_t PE_nRF24L01_configureRF(PE_nRF24_t *handle) {
     PE_nRF24L01_setCE0(handle);
 
     // Set device power up
-    if (PE_nRF24L01_setPowerMode(handle, PE_nRF24_POWER_ON) != PE_nRF24_RESULT_OK) {
+    if (PE_nRF24L01_setPowerMode(handle, PE_nRF24_POWER_ON) != PE_nRF24_RESULT_OK) {//PE_nRF24_REG_CONFIG
         PE_nRF24L01_setCE1(handle);
         return PE_nRF24_RESULT_ERROR;
     }

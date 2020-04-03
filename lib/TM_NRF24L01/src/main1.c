@@ -1,3 +1,5 @@
+#include "tm_stm32_nrf24l01.h"
+
 void init_RX_blocking() {
     /* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
     /* By default 2Mbps data rate and 0dBm output power */
