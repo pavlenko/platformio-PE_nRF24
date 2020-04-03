@@ -74,7 +74,7 @@ int main()
         if (HAL_GetTick() - start > 100) {
             start = HAL_GetTick();
 
-            if (PE_nRF24_sendPacketViaIRQ(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
+            if (PE_nRF24L01_sendPacketViaIRQ(&nRF24, (uint8_t *) addr, data, 32) != PE_nRF24_RESULT_OK) {
                 Error_Handler(__FILE__, __LINE__);
             }
         }
@@ -82,7 +82,7 @@ int main()
         MX_LED_OFF(0);
 #endif
 #ifdef PE_nRF_SLAVE
-        if (PE_nRF24_readPacketViaIRQ(&nRF24, data, 32) != PE_nRF24_RESULT_OK) {
+        if (PE_nRF24L01_readPacketViaIRQ(&nRF24, data, 32) != PE_nRF24_RESULT_OK) {
             Error_Handler(__FILE__, __LINE__);
         }
 

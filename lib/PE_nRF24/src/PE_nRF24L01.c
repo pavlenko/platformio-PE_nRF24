@@ -661,7 +661,7 @@ PE_nRF24_RESULT_t PE_nRF24L01_readPacketAndWait(PE_nRF24_t *handle, uint8_t *dat
     return result;
 }
 
-PE_nRF24_RESULT_t PE_nRF2401_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size) {
+PE_nRF24_RESULT_t PE_nRF24L01_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size) {
     if (handle->status != PE_nRF24_STATUS_READY) {
         return PE_nRF24_RESULT_ERROR;
     }
