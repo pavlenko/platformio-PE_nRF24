@@ -40,7 +40,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
-#include "main.h"
+#include "main1.h"
 
 /* USER CODE BEGIN Includes */
 

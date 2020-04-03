@@ -39,7 +39,7 @@ int main()
     nRF24.bufferData = rxBuffer;
     nRF24.bufferSize = 32;
 
-    if (PE_nRF24_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
+    if (PE_nRF24L01_configureRF(&nRF24) != PE_nRF24_RESULT_OK) {
         Error_Handler(__FILE__, __LINE__);
     }
 
@@ -114,11 +114,11 @@ void PE_Button_onRelease(PE_Button_Key_t *key) {
     (void) key;
 }
 
-uint32_t PE_nRF24_getMillis(void) {
+uint32_t PE_nRF24L01_getMillis(void) {
     return HAL_GetTick();
 }
 
-PE_nRF24_RESULT_t PE_nRF24_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
+PE_nRF24_RESULT_t PE_nRF24L01_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
     (void) handle;
 
     if (HAL_SPI_Receive(&SPIn, data, size, 1000) != HAL_OK) {
@@ -128,7 +128,7 @@ PE_nRF24_RESULT_t PE_nRF24_readData(PE_nRF24_t *handle, uint8_t *data, uint8_t s
     return PE_nRF24_RESULT_OK;
 }
 
-PE_nRF24_RESULT_t PE_nRF24_sendData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
+PE_nRF24_RESULT_t PE_nRF24L01_sendData(PE_nRF24_t *handle, uint8_t *data, uint8_t size) {
     (void) handle;
 
     if (HAL_SPI_Transmit(&SPIn, data, size, 1000) != HAL_OK) {
@@ -138,19 +138,19 @@ PE_nRF24_RESULT_t PE_nRF24_sendData(PE_nRF24_t *handle, uint8_t *data, uint8_t s
     return PE_nRF24_RESULT_OK;
 }
 
-void PE_nRF24_setCE0(PE_nRF24_t *handle) {
+void PE_nRF24L01_setCE0(PE_nRF24_t *handle) {
     //PA2 ------> nRF24_CE
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
     (void) handle;
 }
 
-void PE_nRF24_setCE1(PE_nRF24_t *handle) {
+void PE_nRF24L01_setCE1(PE_nRF24_t *handle) {
     //PA2 ------> nRF24_CE
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
     (void) handle;
 }
 
-void PE_nRF24_setSS0(PE_nRF24_t *handle) {
+void PE_nRF24L01_setSS0(PE_nRF24_t *handle) {
     if (SPIn.Instance == SPI1) {
         //PA4 ------> SPI1_NSS
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
@@ -162,7 +162,7 @@ void PE_nRF24_setSS0(PE_nRF24_t *handle) {
     (void) handle;
 }
 
-void PE_nRF24_setSS1(PE_nRF24_t *handle) {
+void PE_nRF24L01_setSS1(PE_nRF24_t *handle) {
     if (SPIn.Instance == SPI1) {
         //PA4 ------> SPI1_NSS
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
@@ -174,13 +174,13 @@ void PE_nRF24_setSS1(PE_nRF24_t *handle) {
     (void) handle;
 }
 
-void PE_nRF24_onMaxRetransmit(PE_nRF24_t *handle) {
+void PE_nRF24L01_onMaxRetransmit(PE_nRF24_t *handle) {
     (void) handle;
 
 }
 
 #ifdef PE_nRF_MASTER
-//void PE_nRF24_onTXComplete(PE_nRF24_t *handle) {
+//void PE_nRF24L01_onTXComplete(PE_nRF24_t *handle) {
 //    (void) handle;
 //    MX_LED_ON(5);
 //}
@@ -199,7 +199,7 @@ void EXTI3_IRQHandler(void) {
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_3) {
-        if (PE_nRF24_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
+        if (PE_nRF24L01_handleIRQ(&nRF24) != PE_nRF24_RESULT_OK) {
             //MX_LED_ON(2);
         }
     }
