@@ -162,7 +162,6 @@ void PE_nRF24L01_handleIRQ_TX_DS(PE_nRF24_t *handle, uint8_t status) {
 
     PE_nRF24L01_setDirection(handle, PE_nRF24_DIRECTION_RX);
     PE_nRF24L01_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-    PE_nRF24L01_detachIRQ(handle, PE_nRF24_IRQ_MASK_TX_DS);
 
     PE_nRF24L01_setCE1(handle);
 
@@ -183,7 +182,6 @@ void PE_nRF24L01_handleIRQ_MAX_RT(PE_nRF24_t *handle, uint8_t status) {
 
     PE_nRF24L01_setDirection(handle, PE_nRF24_DIRECTION_RX);
     PE_nRF24L01_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-    PE_nRF24L01_detachIRQ(handle, PE_nRF24_IRQ_MASK_MAX_RT);
 
     PE_nRF24L01_setCE1(handle);
 
