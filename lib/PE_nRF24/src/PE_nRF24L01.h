@@ -562,6 +562,19 @@ typedef struct {
     uint8_t bufferSize;
 } PE_nRF24_t;
 
+typedef struct {
+    uint8_t rfChannel;
+    uint8_t payloadWidth;
+    PE_nRF24_CRC_SCHEME_t crcScheme;
+    PE_nRF24_TX_POWER_t txPower;
+    PE_nRF24_DATA_RATE_t dataRate;
+    PE_nRF24_RETRY_COUNT_t retryCount;
+    PE_nRF24_RETRY_DELAY_t retryDelay;
+    PE_nRF24_ADDR_WIDTH_t addressWidth;
+    uint8_t *addressRX;
+    uint8_t *addressTX;
+} PE_nRF24_Config_t;
+
 /* SPI ****************************************************************************************************************/
 
 /**
@@ -838,6 +851,13 @@ PE_nRF24_RESULT_t PE_nRF24L01_configureRF(PE_nRF24_t *handle);
  * @return
  */
 PE_nRF24_RESULT_t PE_nRF24L01_configureRX(PE_nRF24_t *handle, PE_nRF24_configRX_t *config, PE_nRF24_PIPE_t pipe);
+
+/**
+ * @param handle
+ * @param config
+ * @return
+ */
+PE_nRF24_RESULT_t PE_nRF24L01_initialize(PE_nRF24_t *handle, PE_nRF24_Config_t *config);
 
 /**
  * @return

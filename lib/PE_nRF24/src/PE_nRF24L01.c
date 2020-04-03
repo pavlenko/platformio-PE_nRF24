@@ -770,6 +770,61 @@ PE_nRF24_RESULT_t PE_nRF24L01_configureRX(PE_nRF24_t *handle, PE_nRF24_configRX_
     return PE_nRF24_RESULT_OK;
 }
 
+PE_nRF24_RESULT_t PE_nRF24L01_initialize(PE_nRF24_t *handle, PE_nRF24_Config_t *config) {
+    uint8_t reg;
+    PE_nRF24_RESULT_t result = PE_nRF24_RESULT_OK;
+
+    //PE_nRF24L01_setCE0(handle);
+
+    // Set device power up
+    if (PE_nRF24L01_setPowerMode(handle, PE_nRF24_POWER_ON) != PE_nRF24_RESULT_OK) {
+        PE_nRF24L01_setCE1(handle);
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    // Check if prev operation success
+    do {
+        if (PE_nRF24L01_getRegister(handle, PE_nRF24_REG_CONFIG, &reg) != PE_nRF24_RESULT_OK) {
+            PE_nRF24L01_setCE1(handle);
+            return PE_nRF24_RESULT_ERROR;
+        }
+    } while ((reg & PE_nRF24_CONFIG_PWR_UP) == 0x00);
+
+    result |= PE_nRF24L01_setAddressWidth(handle, config->addressWidth);
+    result |= PE_nRF24L01_setTXAddress(handle, config->addressTX);
+    result |= PE_nRF24L01_setRXAddress(handle, config->addressRX, PE_nRF24_PIPE_RX0);
+    result |= PE_nRF24L01_setDataRate(handle, config->dataRate);
+    result |= PE_nRF24L01_setRFChannel(handle, config->rfChannel);
+    result |= PE_nRF24L01_setCRCScheme(handle, config->crcScheme);
+    result |= PE_nRF24L01_setTXPower(handle, config->txPower);
+    result |= PE_nRF24L01_setRetransmit(handle, config->retryCount, config->retryDelay);
+
+    result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_ON, PE_nRF24_PIPE_RX0);
+    result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX1);
+    result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX2);
+    result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX3);
+    result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX4);
+    result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX5);
+
+    result |= PE_nRF24L01_attachRXPipe(handle, PE_nRF24_PIPE_RX0);
+    result |= PE_nRF24L01_attachIRQ(handle, PE_nRF24_IRQ_MASK_ALL);
+
+    result |= PE_nRF24L01_flushTX(handle);
+    result |= PE_nRF24L01_flushRX(handle);
+
+    result |= PE_nRF24L01_clearIRQ(handle);
+
+    result |= PE_nRF24L01_setDirection(handle, PE_nRF24_DIRECTION_RX);
+
+    //PE_nRF24L01_setCE1(handle);
+
+    if (result != PE_nRF24_RESULT_OK) {
+        return PE_nRF24_RESULT_ERROR;
+    }
+
+    return PE_nRF24_RESULT_OK;
+}
+
 __attribute__((weak))
 uint32_t PE_nRF24L01_getMillis(void) {
     return 0;
