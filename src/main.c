@@ -27,10 +27,10 @@ int main()
 
     PE_nRF24_Config_t config;
 
-    config.rfChannel    = 1;
+    config.rfChannel    = 2;
     config.payloadWidth = 1;
     config.crcScheme    = PE_nRF24_CRC_SCHEME_1BYTE;
-    config.txPower      = PE_nRF24_TX_POWER_18dBm;
+    config.txPower      = PE_nRF24_TX_POWER__0dBm;
     config.dataRate     = PE_nRF24_DATA_RATE__250KBPS;
     config.retryCount   = PE_nRF24_RETRY_COUNT__1;
     config.retryDelay   = PE_nRF24_RETRY_DELAY_1000us;
@@ -65,6 +65,11 @@ int main()
         MX_LED_OFF(0);
 #endif
 #ifdef PE_nRF_SLAVE
+        if (HAL_GetTick() - start > 50) {
+            start = HAL_GetTick();
+            MX_LED_ON(5);
+        }
+
         MX_LED_OFF(0);
 #endif
     }

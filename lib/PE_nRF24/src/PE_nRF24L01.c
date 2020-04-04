@@ -136,7 +136,7 @@ void PE_nRF24L01_handleIRQ_RX_DR(PE_nRF24_t *handle, uint8_t status) {
     status |= PE_nRF24_IRQ_MASK_RX_DR;
 
     PE_nRF24L01_setRegister(handle, PE_nRF24_REG_STATUS, &status);
-    PE_nRF24L01_flushRX(handle);
+    //PE_nRF24L01_flushRX(handle);
 
     PE_nRF24L01_setCE1(handle);
 
@@ -612,11 +612,7 @@ PE_nRF24_RESULT_t PE_nRF24L01_initialize(PE_nRF24_t *handle, PE_nRF24_Config_t *
 
     PE_nRF24L01_setCE1(handle);
 
-    if (result != PE_nRF24_RESULT_OK) {
-        return PE_nRF24_RESULT_ERROR;
-    }
-
-    return PE_nRF24_RESULT_OK;
+    return result;
 }
 
 __attribute__((weak))
