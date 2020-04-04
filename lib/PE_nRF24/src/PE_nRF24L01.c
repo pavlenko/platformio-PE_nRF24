@@ -605,7 +605,9 @@ PE_nRF24_RESULT_t PE_nRF24L01_initialize(PE_nRF24_t *handle, PE_nRF24_Config_t *
     result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX4);
     result |= PE_nRF24L01_setAutoACK(handle, PE_nRF24_AUTO_ACK_OFF, PE_nRF24_PIPE_RX5);
 
+    result |= PE_nRF24L01_setRegister(handle, PE_nRF24_REG_RX_PW_P0, &(config->payloadWidth));
     result |= PE_nRF24L01_attachRXPipe(handle, PE_nRF24_PIPE_RX0);
+
     result |= PE_nRF24L01_attachIRQ(handle, PE_nRF24_IRQ_MASK_ALL);
 
     result |= PE_nRF24L01_flushTX(handle);

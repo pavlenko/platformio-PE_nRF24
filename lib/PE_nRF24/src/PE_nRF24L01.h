@@ -824,58 +824,6 @@ PE_nRF24_RESULT_t PE_nRF24L01_getCarrierDetect(PE_nRF24_t *handle, PE_nRF24_BIT_
 
 /**
  * @param handle
- * @param addr
- * @param data
- * @param size
- * @param timeout
- * @return
- */
-PE_nRF24_RESULT_t PE_nRF24L01_sendPacketAndWait(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size, uint16_t timeout);
-
-/**
- * @param handle
- * @param addr
- * @param data
- * @param size
- * @param timeout
- * @return
- */
-PE_nRF24_RESULT_t PE_nRF24L01_readPacketAndWait(PE_nRF24_t *handle, uint8_t *data, uint8_t size, uint16_t timeout);
-
-/**
- * @param handle
- * @param addr
- * @param data
- * @param size
- * @return
- */
-PE_nRF24_RESULT_t PE_nRF24L01_sendPacketViaIRQ(PE_nRF24_t *handle, uint8_t *addr, uint8_t *data, uint8_t size);
-
-/**
- * @param handle
- * @param addr
- * @param data
- * @param size
- * @return
- */
-PE_nRF24_RESULT_t PE_nRF24L01_readPacketViaIRQ(PE_nRF24_t *handle, uint8_t *data, uint8_t size);
-
-/**
- * @param handle
- * @return
- */
-PE_nRF24_RESULT_t PE_nRF24L01_configureRF(PE_nRF24_t *handle);
-
-/**
- * @param handle
- * @param config
- * @param pipe
- * @return
- */
-PE_nRF24_RESULT_t PE_nRF24L01_configureRX(PE_nRF24_t *handle, PE_nRF24_configRX_t *config, PE_nRF24_PIPE_t pipe);
-
-/**
- * @param handle
  * @param config
  * @return
  */
