@@ -120,7 +120,9 @@ PE_nRF24_RESULT_t PE_nRF24L01_setTXPayload(PE_nRF24_t *handle, uint8_t *data) {
     PE_nRF24_RESULT_t result;
 
     PE_nRF24L01_setSS0(handle);
+
     result = PE_nRF24L01_sendMem(handle, PE_nRF24_CMD_W_TX_PAYLOAD, data, handle->payloadWidth);
+
     PE_nRF24L01_setSS1(handle);
 
     return result;
